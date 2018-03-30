@@ -33,12 +33,8 @@
         /// <summary>
         /// The internal dictionary
         /// </summary>
-        private Dictionary<T, U> internalDictionary;
-
-        /// <summary>
-        /// The initialized flag
-        /// </summary>
-        private bool initialized = false;
+        Dictionary<T, U> internalDictionary => this.lazyDictionary.Value;
+        private readonly Lazy<Dictionary<T, U>> lazyDictionary;
 
         /// <summary>
         /// The formatter
@@ -52,41 +48,26 @@
         public PersistentDictionary(string filename)
         {
             this.filename = filename;
+            this.lazyDictionary = new Lazy<Dictionary<T, U>>(this.LoadOrCreateEmpty);
         }
 
-        /// <summary>
-        /// Ensures the current instance has been initialized.
-        /// </summary>
-        protected void EnsureInitialized()
-        {
-            if (!initialized)
-            {
-                lock (syncRoot)
-                {
-                    if (!initialized)
-                    {
-                        try
-                        {
-                            using (var stream = this.isolatedStorage.OpenFile(filename, FileMode.Open, FileAccess.Read))
-                            {
-                                this.internalDictionary = (Dictionary<T, U>)formatter.Deserialize(stream);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            // At least log to the default output
-                            HockeyClient.Current.AsInternal().HandleInternalUnhandledException(e);
-                        }
-                        finally
-                        {
-                            // Make sure that subsequent calls won't fail
-                            if (this.internalDictionary == null)
-                                this.internalDictionary = new Dictionary<T, U>();
+        Dictionary<T, U> LoadOrCreateEmpty() {
+            var result = new Dictionary<T, U>();
+            try {
+                if (!this.isolatedStorage.FileExists(this.filename))
+                    return result;
 
-                            initialized = true;
-                        }
-                    }
+                using (var stream = this.isolatedStorage.OpenFile(this.filename, FileMode.Open, FileAccess.Read)) {
+                    return (Dictionary<T, U>)this.formatter.Deserialize(stream) ?? result;
                 }
+            } catch (FileNotFoundException) {
+                // file got removed after we checked
+                return result;
+            }
+            catch (Exception e) {
+                // At least log to the default output
+                HockeyClient.Current.AsInternal().HandleInternalUnhandledException(e);
+                return result;
             }
         }
 
@@ -99,7 +80,7 @@
             {
                 try
                 {
-                    using (var stream = isolatedStorage.OpenFile(filename, FileMode.Create, FileAccess.ReadWrite))
+                    using (var stream = isolatedStorage.CreateFile(this.filename))
                     {
                         formatter.Serialize(stream, internalDictionary);
                     }
@@ -118,7 +99,6 @@
         /// <param name="value">The object to use as the value of the element to add.</param>
         public void Add(T key, U value)
         {
-            this.EnsureInitialized();
             this.internalDictionary.Add(key, value);
             this.Save();
         }
@@ -132,17 +112,13 @@
         /// </returns>
         public bool ContainsKey(T key)
         {
-            this.EnsureInitialized();
             return this.internalDictionary.ContainsKey(key);
         }
 
         /// <summary>
         /// Gets an <see cref="T:System.Collections.Generic.ICollection`1" /> containing the keys of the <see cref="T:System.Collections.Generic.IDictionary`2" />.
         /// </summary>
-        public ICollection<T> Keys
-        {
-            get { this.EnsureInitialized(); return this.internalDictionary.Keys; }
-        }
+        public ICollection<T> Keys => this.internalDictionary.Keys;
 
         /// <summary>
         /// Removes the element with the specified key from the <see cref="T:System.Collections.Generic.IDictionary`2" />.
@@ -153,7 +129,6 @@
         /// </returns>
         public bool Remove(T key)
         {
-            this.EnsureInitialized();
             var removed = this.internalDictionary.Remove(key);
             if (removed) this.Save();
             return removed;
@@ -169,17 +144,13 @@
         /// </returns>
         public bool TryGetValue(T key, out U value)
         {
-            this.EnsureInitialized();
             return this.internalDictionary.TryGetValue(key, out value);
         }
 
         /// <summary>
         /// Gets an <see cref="T:System.Collections.Generic.ICollection`1" /> containing the values in the <see cref="T:System.Collections.Generic.IDictionary`2" />.
         /// </summary>
-        public ICollection<U> Values
-        {
-            get { this.EnsureInitialized(); return this.internalDictionary.Values; }
-        }
+        public ICollection<U> Values => this.internalDictionary.Values;
 
         /// <summary>
         /// Gets or sets the element with the specified key.
@@ -188,14 +159,9 @@
         /// <returns></returns>
         public U this[T key]
         {
-            get
-            {
-                this.EnsureInitialized();
-                return this.internalDictionary[key];
-            }
+            get => this.internalDictionary[key];
             set
             {
-                this.EnsureInitialized();
                 this.internalDictionary[key] = value;
                 this.Save();
             }
@@ -211,7 +177,6 @@
             if (item.Key == null)
                 return;
 
-            this.EnsureInitialized();
             this.internalDictionary.Add(item.Key, item.Value);
             this.Save();
         }
@@ -221,8 +186,6 @@
         /// </summary>
         public void Clear()
         {
-            this.EnsureInitialized();
-
             if (this.internalDictionary.Count == 0)
                 return;
 
@@ -240,7 +203,6 @@
         /// <exception cref="System.NotImplementedException"></exception>
         public bool Contains(KeyValuePair<T, U> item)
         {
-            this.EnsureInitialized();
             return this.internalDictionary.ContainsKey(item.Key) && this.internalDictionary.ContainsValue(item.Value);
         }
 
@@ -257,18 +219,12 @@
         /// <summary>
         /// Gets the number of elements contained in the <see cref="T:System.Collections.Generic.ICollection`1" />.
         /// </summary>
-        public int Count
-        {
-            get { this.EnsureInitialized(); return this.internalDictionary.Count; }
-        }
+        public int Count => this.internalDictionary.Count;
 
         /// <summary>
         /// Gets a value indicating whether the <see cref="T:System.Collections.Generic.ICollection`1" /> is read-only.
         /// </summary>
-        public bool IsReadOnly
-        {
-            get { return false; }
-        }
+        public bool IsReadOnly => false;
 
         /// <summary>
         /// Removes the first occurrence of a specific object from the <see cref="T:System.Collections.Generic.ICollection`1" />.
@@ -279,8 +235,7 @@
         /// </returns>
         public bool Remove(KeyValuePair<T, U> item)
         {
-            // TODO: Not implemented
-            return false;
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -291,7 +246,6 @@
         /// </returns>
         public IEnumerator<KeyValuePair<T, U>> GetEnumerator()
         {
-            this.EnsureInitialized();
             return this.internalDictionary.GetEnumerator();
         }
 
@@ -303,7 +257,6 @@
         /// </returns>
         IEnumerator IEnumerable.GetEnumerator()
         {
-            this.EnsureInitialized();
             return ((IEnumerable)this.internalDictionary).GetEnumerator();
         }
     }
