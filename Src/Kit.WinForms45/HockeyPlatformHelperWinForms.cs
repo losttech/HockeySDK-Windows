@@ -10,6 +10,8 @@ using Microsoft.HockeyApp.Services.Device;
 
 namespace Microsoft.HockeyApp
 {
+    using Microsoft.Win32;
+
     /// <summary>
     /// HockeyPlatformHelper for WinForms.
     /// </summary>
