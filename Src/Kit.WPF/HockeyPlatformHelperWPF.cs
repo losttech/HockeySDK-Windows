@@ -52,7 +52,7 @@ namespace Microsoft.HockeyApp
         {
             using (var isoStore = GetIsoStore())
             {
-                using (var fileStream = isoStore.OpenFile(this.PostfixWithUniqueAppString(FILE_PREFIX + key, true), FileMode.Create, FileAccess.Write))
+                using (var fileStream = isoStore.OpenFile(PostfixWithUniqueAppString(FILE_PREFIX + key, true), FileMode.Create, FileAccess.Write))
                 {
                     using (var writer = new StreamWriter(fileStream))
                     {
@@ -74,7 +74,7 @@ namespace Microsoft.HockeyApp
             {
                 if (isoStore.FileExists(FILE_PREFIX + key))
                 {
-                    using (var fileStream = isoStore.OpenFile(this.PostfixWithUniqueAppString(FILE_PREFIX + key, true), FileMode.Open, FileAccess.Read))
+                    using (var fileStream = isoStore.OpenFile(PostfixWithUniqueAppString(FILE_PREFIX + key, true), FileMode.Open, FileAccess.Read))
                     {
                         using (var reader = new StreamReader(fileStream))
                         {
@@ -94,9 +94,9 @@ namespace Microsoft.HockeyApp
         {
             using (var isoStore = GetIsoStore())
             {
-                if (isoStore.FileExists(this.PostfixWithUniqueAppString(FILE_PREFIX + key, true)))
+                if (isoStore.FileExists(PostfixWithUniqueAppString(FILE_PREFIX + key, true)))
                 {
-                    isoStore.DeleteFile(this.PostfixWithUniqueAppString(FILE_PREFIX + key, true));
+                    isoStore.DeleteFile(PostfixWithUniqueAppString(FILE_PREFIX + key, true));
                 }
             }
         }
@@ -114,9 +114,9 @@ namespace Microsoft.HockeyApp
         {
             using (var isoStore = GetIsoStore())
             {
-                if (isoStore.FileExists(this.PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName))
+                if (isoStore.FileExists(PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName))
                 {
-                    isoStore.DeleteFile(this.PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName);
+                    isoStore.DeleteFile(PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName);
                     return true;
                 }
                 return false;
@@ -133,7 +133,7 @@ namespace Microsoft.HockeyApp
         {
             using (var isoStore = GetIsoStore())
             {
-                return isoStore.FileExists(this.PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName);
+                return isoStore.FileExists(PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName);
             }
         }
 
@@ -147,7 +147,7 @@ namespace Microsoft.HockeyApp
         {
             using (var isoStore = GetIsoStore())
             {
-                return isoStore.OpenFile(this.PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName, FileMode.Open, FileAccess.Read);
+                return isoStore.OpenFile(PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName, FileMode.Open, FileAccess.Read);
             }
         }
 
@@ -163,12 +163,12 @@ namespace Microsoft.HockeyApp
             using (var isoStore = GetIsoStore())
             {
                 // Ensure crashes folder exists
-                if (!isoStore.DirectoryExists(this.PostfixWithUniqueAppString(folderName)))
+                if (!isoStore.DirectoryExists(PostfixWithUniqueAppString(folderName)))
                 {
-                    isoStore.CreateDirectory(this.PostfixWithUniqueAppString(folderName));
+                    isoStore.CreateDirectory(PostfixWithUniqueAppString(folderName));
                 }
 
-                using (var fileStream = isoStore.OpenFile(this.PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName, FileMode.Create, FileAccess.Write))
+                using (var fileStream = isoStore.OpenFile(PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName, FileMode.Create, FileAccess.Write))
                 {
                     await dataStream.CopyToAsync(fileStream);
                 }
@@ -186,7 +186,7 @@ namespace Microsoft.HockeyApp
             try {
                 using (var isoStore = GetIsoStore())
                 {
-                    return isoStore.GetFileNames(this.PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileNamePattern ?? "*");
+                    return isoStore.GetFileNames(PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileNamePattern ?? "*");
                 }
             } catch (DirectoryNotFoundException) {
                 return new string[0];
@@ -212,12 +212,12 @@ namespace Microsoft.HockeyApp
             using (var isoStore = GetIsoStore())
             {
                 // Ensure crashes folder exists
-                if (!isoStore.DirectoryExists(this.PostfixWithUniqueAppString(folderName)))
+                if (!isoStore.DirectoryExists(PostfixWithUniqueAppString(folderName)))
                 {
-                    isoStore.CreateDirectory(this.PostfixWithUniqueAppString(folderName));
+                    isoStore.CreateDirectory(PostfixWithUniqueAppString(folderName));
                 }
 
-                using (var fileStream = isoStore.OpenFile(this.PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName, FileMode.Create, FileAccess.Write))
+                using (var fileStream = isoStore.OpenFile(PostfixWithUniqueAppString(folderName) + Path.DirectorySeparatorChar + fileName, FileMode.Create, FileAccess.Write))
                 {
                     dataStream.CopyTo(fileStream);
                 }
